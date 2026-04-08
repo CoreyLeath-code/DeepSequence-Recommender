@@ -54,3 +54,10 @@ FastAPI application
 Sequence processor → sequence model → top-k recommendations
     ↓
 /metrics endpoint → Prometheus / monitoring stack
+
+Why is this stronger than a notebook recommender?
+Because it demonstrates service boundaries, startup initialization, observability, deployment assets, and testability.
+What makes the repo production-style even if it is still a portfolio project?
+It is organized like a service, with routing, config, model initialization, and metrics exposed in a way that resembles real backend ML systems.
+What would you improve next for enterprise use?
+I would externalize model loading, add benchmark automation, add authentication or rate limiting, and publish quality and performance reports tied to CI.
