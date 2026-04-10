@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 
 from fastapi import FastAPI
 from prometheus_client import make_asgi_app
@@ -14,6 +15,8 @@ from app.core.model import DeepSequenceModel
 
 logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger(__name__)
+
+_startup_time: float = 0.0
 
 app = FastAPI(
     title="DeepSequence Recommender",
@@ -31,6 +34,7 @@ app.include_router(router)
 @app.on_event("startup")
 def startup_event() -> None:
     """Initialise a default in-memory model for demonstration purposes."""
+    global _startup_time
     logger.info("Initialising DeepSequence model…")
 
     processor = SequenceProcessor(max_length=settings.max_sequence_length)
@@ -46,6 +50,7 @@ def startup_event() -> None:
     )
 
     init_model(processor, model)
+    _startup_time = time.time()
     logger.info(
         "Model ready. vocab_size=%d embedding_dim=%d hidden_dim=%d",
         processor.vocab_size,
@@ -57,3 +62,15 @@ def startup_event() -> None:
 @app.get("/", summary="Root")
 def root() -> dict:
     return {"service": "DeepSequence Recommender", "version": "1.0.0"}
+
+
+@app.get("/health", summary="Application health check", tags=["health"])
+def health() -> dict:
+    """Return service liveness and basic diagnostics."""
+    uptime = round(time.time() - _startup_time, 1) if _startup_time else 0.0
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "environment": settings.environment,
+        "uptime_seconds": uptime,
+    }

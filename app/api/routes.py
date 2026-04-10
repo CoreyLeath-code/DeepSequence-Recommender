@@ -5,7 +5,6 @@ from __future__ import annotations
 import time
 from typing import List, Optional
 
-import torch
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 

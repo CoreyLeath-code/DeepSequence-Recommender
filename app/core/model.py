@@ -26,9 +26,9 @@ class AttentionLayer(nn.Module):
 
     def forward(self, lstm_out: torch.Tensor) -> torch.Tensor:
         # lstm_out: (batch, seq_len, hidden_dim*2)
-        scores = self.attn(lstm_out).squeeze(-1)          # (batch, seq_len)
+        scores = self.attn(lstm_out).squeeze(-1)  # (batch, seq_len)
         weights = F.softmax(scores, dim=-1).unsqueeze(-1)  # (batch, seq_len, 1)
-        context = (lstm_out * weights).sum(dim=1)          # (batch, hidden_dim*2)
+        context = (lstm_out * weights).sum(dim=1)  # (batch, hidden_dim*2)
         return context
 
 
@@ -71,10 +71,10 @@ class DeepSequenceModel(nn.Module):
         torch.Tensor
             Logit tensor of shape ``(batch_size, num_items)``.
         """
-        emb = self.dropout(self.embedding(item_seq))    # (B, L, E)
-        lstm_out, _ = self.lstm(emb)                    # (B, L, H*2)
-        context = self.attention(lstm_out)               # (B, H*2)
-        logits = self.output_proj(self.dropout(context)) # (B, num_items)
+        emb = self.dropout(self.embedding(item_seq))  # (B, L, E)
+        lstm_out, _ = self.lstm(emb)  # (B, L, H*2)
+        context = self.attention(lstm_out)  # (B, H*2)
+        logits = self.output_proj(self.dropout(context))  # (B, num_items)
         return logits
 
     @torch.no_grad()
