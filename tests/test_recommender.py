@@ -7,7 +7,6 @@ import pytest
 from app.core.data_processor import SequenceProcessor
 from app.core.model import DeepSequenceModel
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
