@@ -6,7 +6,7 @@
 ![Kubernetes](https://img.shields.io/badge/k8s-manifests-informational)
 ![Prometheus](https://img.shields.io/badge/metrics-prometheus-E6522C?logo=prometheus&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-
+https://deepsequence-recommender-aauw5lsxglhsdwzrwacdo8.streamlit.app/
 # DeepSequence Recommender
 
 DeepSequence Recommender is a sequence-aware recommendation service built around a FastAPI application, a modular sequence-processing pipeline, and Prometheus-compatible instrumentation.
