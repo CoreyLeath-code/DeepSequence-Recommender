@@ -1,25 +1,13 @@
-# Production dependencies
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
-pydantic==2.9.2
-pydantic-settings==2.5.2
-python-dotenv==1.0.1
-numpy==1.26.4
-torch==2.6.0
-mlflow==3.11.1
-prometheus-client==0.21.0
-redis==5.2.0
-python-jose[cryptography]==3.4.0
-passlib[bcrypt]==1.7.4
-httpx==0.27.2
-streamlit==1.39.0
+# Machine Learning & Deep Sequence Core Libraries
+torch>=2.2.0
+numpy>=1.24.2
+pandas>=2.2.1
 
-# Development / CI dependencies
-pytest==8.3.3
-pytest-asyncio==0.24.0
-black==26.3.1
-flake8==7.1.1
-mypy==1.11.2
-bandit==1.7.10
-streamlit>=1.35.0
+# High Performance Serialization Format Models
+onnx>=1.15.0
+onnxruntime>=1.17.0
 
+# User Visualization & Diagnostics Telemetry Panels
+streamlit>=1.30.0
+matplotlib>=3.8.2
+seaborn>=0.13.2
