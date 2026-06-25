@@ -26,11 +26,11 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: ${{ runner.os }}-pip-
 
-      # Explicitly provisions all core testing, API dependencies, and framework requirements
+      # Provision core testing, routing frameworks, metrics layers, and requirements
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black mypy bandit pytest fastapi httpx
+          pip install flake8 black mypy bandit pytest fastapi httpx prometheus_client
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Lint (flake8)
