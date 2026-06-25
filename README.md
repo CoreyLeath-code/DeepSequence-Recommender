@@ -9,7 +9,63 @@ Distributed DeepSequence Recommender Platform
 An enterprise-grade, high-concurrency sequential recommendation system engineered for sub-5ms low-latency next-item inference scoring. Moving past simple offline experiments, this platform implements a fully decoupled **Online Real-Time Feature Store**, model compilation loops via serialization to optimized **ONNX execution graphs**, and high-concurrency scaling layouts leveraging **NVIDIA Triton Inference Server** configurations.
 
 
+## 🏗️ Distributed Horizontal Scaling System Architecture
 
+To scale this platform to support millions of active users and tens of thousands of concurrent recommendation requests per second (RPS), the system scales horizontally by decoupling ingestion, feature aggregation, caching, and GPU cluster serving:
+
+                            [ CLIENT APPLICATION LUNTIME ]
+                                          │
+                     (High-Throughput Concurrent HTTP/gRPC Requests)
+                                          │
+                                          ▼
+                         [ ELB / REVERSE PROXY GATEWAY ]
+                                 (Nginx / AWS ALB)
+                                          │
+                 ┌────────────────────────┴────────────────────────┐
+                 ▼                                                 ▼
+    [ API ROUTING POD 1 ]                             [ API ROUTING POD 2 ]
+      (FastAPI/Go Cluster)                             (FastAPI/Go Cluster)
+                 │                                                 │
+                 └────────────────────────┬────────────────────────┘
+                                          │
+                (Parallel Asynchronous Feature Synthesis Loops)
+                                          │
+                                          ▼
+                      [ DISTRIBUTED REAL-TIME FEATURE STORE ]
+                     ┌──────────────────────────────────────┐
+                     │ • Redis Cluster / Feast Mesh Layer   │
+                     │ • Fetches Rolling Click Histories    │
+                     │ • Cache Miss Fallback to PostgreSQL  │
+                     └──────────────────┬───────────────────┘
+                                        │
+                          (Constructed Input Tensors)
+                                        │
+                                        ▼
+                       [ LOAD BALANCED INFERENCE MESH ]
+                                (gRPC Channels)
+                                        │
+       ┌────────────────────────────────┼────────────────────────────────┐
+       ▼                                ▼                                ▼
+[ TRITON INSTANCE POD 1 ]       [ TRITON INSTANCE POD 2 ]       [ TRITON INSTANCE POD 3 ]
+├─ Dynamic Batcher Aggregator   ├─ Dynamic Batcher Aggregator   ├─ Dynamic Batcher Aggregator
+├─ TensorRT / ONNX Graph Core   ├─ TensorRT / ONNX Graph Core   ├─ TensorRT / ONNX Graph Core
+└─ GPU Hardware Acceleration    └─ GPU Hardware Acceleration    └─ GPU Hardware Acceleration
+│                                │                                │
+└────────────────────────────────┼────────────────────────────────┘
+│
+(Ranked Top-K Recommendations)
+│
+▼
+[ TIME-SERIES OBSERVABILITY MESH ]
+(Kafka Stream -> Prometheus -> Grafana/Streamlit)
+
+
+### ⚡ Critical Scaling Pillars Defined
+
+1. **API Gateway & Routing Layer:** Acts as the reverse proxy boundary. It terminates TLS connections and evenly load-balances incoming high-concurrency requests down into distributed stateless stateless endpoint pods.
+2. **Distributed Real-Time Feature Store (Redis Cluster):** Prevents heavy analytical dataset lookups from hitting primary transaction databases. By holding recent sliding interaction vectors in-memory, retrieval latencies remain anchored to sub-millisecond durations ($<1\text{ms}$).
+3. **Load Balanced Triton Inference Server Mesh:** Multiple Triton pods scale out across Kubernetes nodes using an active horizontal pod autoscaler (HPA) monitored via GPU utility stats. Dynamic batching steps pack incoming individual user sequence records into dense execution arrays to fully exploit hardware processing capability.
+4. **Telemetry Processing Pipeline:** Decouples monitoring logging layers. Prediction
  End-to-End System Architecture
 
 To handle thousands of parallel client requests concurrently while honoring strict Service Level Agreements (SLAs), user session tracking is separated from heavy deep neural network evaluation layers:
