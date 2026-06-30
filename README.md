@@ -1,20 +1,21 @@
-DeepSequence-Recommender: Distributed Sequential Recommendation Platform
-<p align="left">
-<a href="[https://github.com/Trojan3877/DeepSequence-Recommender/actions](https://github.com/Trojan3877/DeepSequence-Recommender/actions)">
-<img src="[https://img.shields.io/github/actions/workflow/status/Trojan3877/DeepSequence-Recommender/ci.yml?branch=main&style=flat-square&logo=github-actions&logoColor=white&label=CI&v=4](https://img.shields.io/github/actions/workflow/status/Trojan3877/DeepSequence-Recommender/ci.yml?branch=main&style=flat-square&logo=github-actions&logoColor=white&label=CI&v=4)" alt="Build Status">
-</a>
-<img src="[https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white)" alt="Python Version">
-<img src="[https://img.shields.io/badge/Serialization-ONNX%20Runtime%20v1.17-6366F1?style=flat-square](https://img.shields.io/badge/Serialization-ONNX%20Runtime%20v1.17-6366F1?style=flat-square)" alt="Serialization">
-<img src="[https://img.shields.io/badge/Serving-Triton%20Inference%20Server-76B900?style=flat-square&logo=nvidia&logoColor=white](https://img.shields.io/badge/Serving-Triton%20Inference%20Server-76B900?style=flat-square&logo=nvidia&logoColor=white)" alt="Serving Core">
-<img src="[https://img.shields.io/badge/code%20style-black-000000?style=flat-square](https://img.shields.io/badge/code%20style-black-000000?style=flat-square)" alt="Code Style">
-<img src="[https://img.shields.io/badge/Model-Sequential_RNN_%7C_Transformer-0052CC?style=flat-square](https://img.shields.io/badge/Model-Sequential_RNN_%7C_Transformer-0052CC?style=flat-square)" alt="Model Family">
-<img src="[https://img.shields.io/badge/Pipeline-Bounded_Inference_State-3670A0?style=flat-square&logo=pydantic&logoColor=white](https://img.shields.io/badge/Pipeline-Bounded_Inference_State-3670A0?style=flat-square&logo=pydantic&logoColor=white)" alt="Pipeline Context">
-<img src="[https://img.shields.io/badge/Guardrails-Latency_SLA_Breaker-D32F2F?style=flat-square](https://img.shields.io/badge/Guardrails-Latency_SLA_Breaker-D32F2F?style=flat-square)" alt="Guardrails">
-<img src="[https://img.shields.io/badge/type%20checking-mypy-2F5597?style=flat-square](https://img.shields.io/badge/type%20checking-mypy-2F5597?style=flat-square)" alt="Type Checking">
-<img src="[https://img.shields.io/badge/security-bandit%20passed-059669?style=flat-square](https://img.shields.io/badge/security-bandit%20passed-059669?style=flat-square)" alt="Security Scan">
-<img src="[https://img.shields.io/badge/Inference_SLA-p99_%3C_50ms-blueviolet?style=flat-square](https://img.shields.io/badge/Inference_SLA-p99_%3C_50ms-blueviolet?style=flat-square)" alt="Inference SLA Metrics">
-<img src="[https://img.shields.io/badge/Throughput-12k_reqs%2Fsec-orange?style=flat-square](https://img.shields.io/badge/Throughput-12k_reqs%2Fsec-orange?style=flat-square)" alt="System Throughput Metrics">
-</p>
+# 🛒 DeepSequence-Recommender: Deep Sequential Recommendation Engine
+
+[![Continuous Integration](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/ci-cd.yml)
+[![Code Quality Assurance](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/ci.yml/badge.svg)](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/ci.yml)
+[![Security Analysis](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/security.yml/badge.svg)](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/security.yml)
+[![SAST Code Flaw Scan](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/sast.yml/badge.svg)](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/sast.yml)
+[![Performance Benchmarks](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/benchmarks.yml)
+[![Schema Validation](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/data-validation.yml/badge.svg)](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/data-validation.yml)
+[![Automated Release](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/release.yml/badge.svg)](https://github.com/Trojan3877/DeepSequence-Recommender/actions/workflows/release.yml)
+
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
+[![Framework: PyTorch](https://img.shields.io/badge/Framework-PyTorch-ee4c2c.svg?logo=pytorch)](https://pytorch.org/)
+[![Code Style: Flake8](https://img.shields.io/badge/code%20style-flake8-black)](https://flake8.pycqa.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
+
+
 An enterprise-grade, high-concurrency sequential recommendation system engineered for sub-50ms low-latency next-item inference scoring. Moving past simple offline batch notebooks, this platform implements **real-time session sequence slicing**, an **active SLA latency circuit breaker**, and decoupled **Immutable Inference Context Objects** to guarantee operational stability under intense clickstream traffic.
 ##System Architecture & Data Flow
 DeepSequence-Recommender decouples real-time sequence orchestration from core model matrix operations, preventing memory overflow (OOM) and latency spikes during deep user sessions.
