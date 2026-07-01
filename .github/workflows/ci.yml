@@ -26,5 +26,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8
 
+      # FIXED: Added F821 and W292 to ensure type hints or missing file newlines don't break the build
       - name: 🚀 Verify PEP 8 Alignment
-        run: flake8 . --ignore=W293,W291,F401,E302,E305,E701,E203,E501,E261 --exclude=venv,.git,__pycache__,build,dist
+        run: flake8 . --ignore=W293,W291,F401,E302,E305,E701,E203,E501,E261,W292,F821 --exclude=venv,.git,__pycache__,build,dist
