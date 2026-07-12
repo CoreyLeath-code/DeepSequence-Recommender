@@ -59,6 +59,50 @@ Decoupling state instantiation from model execution delivers clear improvements 
 | **Throughput Density** | ~1,400 requests/sec | ~12,000 requests/sec via Triton/ONNX | **+757% High-Concurrency Load** |
 | **Memory Allocation Profile** | O(N) linear explosion based on history | O(1) deterministic cap via Guardrails | **Eliminated Session OOM Vulnerability** |
 | **Fallback Resiliency** | System Timeout / Cascade Drop | Instant Automatic Cache Triage | **99.99% Availability Guarantee** |
+
+## 📊 Metrics Table
+
+Measured from the repository on 2026-07-12. Runtime and SLO values are recorded from the checked-in configuration, metrics documentation, and README architecture notes.
+
+| Area | Metric | Current / Recommended Value | Source |
+|---|---:|---:|---|
+| Codebase | Tracked files | 43 | `git ls-files` |
+| Codebase | Python files | 22 | `*.py` files across app, recommender, docs, and tests |
+| Codebase | Python NCLOC | 995 | Non-empty, non-comment Python lines |
+| Tests | Test files | 2 | `tests/test_*.py` |
+| Tests | Pytest cases | 27 passing | `pytest --cov=app --cov=recommender` |
+| Tests | Coverage scope | `app`, `recommender` | `pytest-cov` |
+| Tests | Combined coverage | 54% | Local coverage run |
+| CI/CD | GitHub Actions workflows | 7 | `.github/workflows/*.yml` |
+| Dependencies | Runtime dependencies | 12 | `requirements.txt` |
+| Delivery | Container assets | 2 | `Dockerfile`, `docker-compose.yml` |
+| Delivery | Kubernetes manifests | 3 | `k8s/*.yaml` |
+| Documentation | Documentation pages | 4 | `README.md`, `docs/*.md` |
+| Model Config | Max sequence length | 50 items | `app.core.config.Settings.max_sequence_length` |
+| Model Config | Default top-k recommendations | 10 items | `app.core.config.Settings.top_k` |
+| Model Config | Embedding dimension | 64 | `app.core.config.Settings.embedding_dim` |
+| Model Config | Hidden dimension | 128 | `app.core.config.Settings.hidden_dim` |
+| Model Config | Recurrent layers | 2 | `app.core.config.Settings.num_layers` |
+| Model Architecture | Encoder | Bidirectional LSTM + attention | `app.core.model.DeepSequenceModel` |
+| Model Architecture | Padding index | 0 | `SequenceProcessor` / `DeepSequenceModel` |
+| API | Recommendation endpoint | `POST /recommendations/` | `app.api.routes` |
+| API | Health endpoint | `GET /recommendations/health` | `app.api.routes` |
+| Observability | Active requests | `deepseq_active_requests` | Prometheus gauge |
+| Observability | Recommendation total | `deepseq_recommendations_total{status}` | Prometheus counter |
+| Observability | Request latency | `deepseq_recommendation_latency_seconds` | Prometheus histogram |
+| Observability | Model latency | `deepseq_model_inference_latency_seconds` | Prometheus histogram |
+| Observability | Cache hits | `deepseq_cache_hits_total` | Prometheus counter |
+| Observability | Cache misses | `deepseq_cache_misses_total` | Prometheus counter |
+| SLO | p50 recommendation latency | < 50 ms | `docs/metrics.md` |
+| SLO | p99 recommendation latency | < 250 ms | `docs/metrics.md` |
+| SLO | Model inference p50 latency | < 20 ms | `docs/metrics.md` |
+| SLO | Availability target | >= 99.9% | `docs/metrics.md` |
+| SLO | Error-rate target | < 0.1% | `docs/metrics.md` |
+| Architecture Benchmark | Documented p99 latency range | 15-42 ms bounded engine | README benchmark table |
+| Architecture Benchmark | Documented throughput density | ~12,000 requests/sec | README benchmark table |
+| Architecture Benchmark | Documented memory profile | O(1) deterministic cap | README benchmark table |
+| Architecture Benchmark | Documented fallback availability | 99.99% availability guarantee | README benchmark table |
+
 ## 🚀 Quick Start Instructions
 ### Prerequisites
  * Python 3.10 or greater installed locally.
