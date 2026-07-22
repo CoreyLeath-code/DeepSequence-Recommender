@@ -8,13 +8,12 @@ services:
       - "8000:8000"
     env_file:
       - .env
-    depends_on:
-      - redis
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    container_name: deepsequence-redis
-    ports:
-      - "6379:6379"
+    environment:
+      ENVIRONMENT: production
+      MODEL_BUNDLE_PATH: /models/current
+    volumes:
+      - ./models/current:/models/current:ro
+    read_only: true
+    tmpfs:
+      - /tmp
     restart: unless-stopped

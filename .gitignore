@@ -24,3 +24,8 @@ mlruns/
 models/*.pt
 models/*.pth
 models/*.ckpt
+models/
+data/
+testtmp/
+benchmark-results.json
+coverage.xml

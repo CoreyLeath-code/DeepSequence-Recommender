@@ -66,3 +66,21 @@ class SequenceProcessor:
     def decode_recommendations(self, indices: List[int]) -> List[Optional[str]]:
         """Map numeric recommendation indices back to item identifiers."""
         return [self.idx_to_item(idx) for idx in indices]
+
+    def export_vocabulary(self) -> Dict[str, int]:
+        """Return a stable copy of the item-to-index mapping."""
+        return dict(self._item2idx)
+
+    @classmethod
+    def from_vocabulary(
+        cls, vocabulary: Dict[str, int], max_length: int = 50
+    ) -> "SequenceProcessor":
+        """Restore and validate a persisted vocabulary."""
+        expected = set(range(1, len(vocabulary) + 1))
+        if set(vocabulary.values()) != expected:
+            raise ValueError("Vocabulary indices must be contiguous and start at one")
+        processor = cls(max_length=max_length)
+        processor._item2idx = dict(vocabulary)
+        processor._idx2item = {index: item for item, index in vocabulary.items()}
+        processor._next_idx = len(vocabulary) + 1
+        return processor
