@@ -6,8 +6,14 @@ They exercise the full request/response cycle including startup initialisation.
 
 from __future__ import annotations
 
+import os
+
 import pytest
 from fastapi.testclient import TestClient
+
+# Keep smoke tests independent of developer-generated artifacts in models/current.
+os.environ["ENVIRONMENT"] = "development"
+os.environ["MODEL_BUNDLE_PATH"] = "models/test-bundle-does-not-exist"
 
 from app.main import app
 
@@ -85,7 +91,7 @@ class TestRecommendEndpoint:
             "top_k": 5,
         }
         response = client.post("/recommendations/", json=payload)
-        assert response.status_code == 200
+        assert response.status_code == 422
 
     def test_recommend_unknown_items(self, client: TestClient) -> None:
         payload = {
@@ -94,4 +100,38 @@ class TestRecommendEndpoint:
             "top_k": 5,
         }
         response = client.post("/recommendations/", json=payload)
-        assert response.status_code == 200
+        assert response.status_code == 422
+
+    def test_recommend_rejects_top_k_beyond_contract(self, client: TestClient) -> None:
+        response = client.post(
+            "/recommendations/",
+            json={"user_id": "u", "item_sequence": ["item_1"], "top_k": 51},
+        )
+        assert response.status_code == 422
+
+    def test_response_exposes_model_provenance(self, client: TestClient) -> None:
+        response = client.post(
+            "/recommendations/",
+            json={"user_id": "u", "item_sequence": ["item_1"], "top_k": 3},
+        )
+        assert response.json()["model_version"] == "development-untrained"
+        assert response.json()["fallback"] is False
+
+
+class TestFeedbackEndpoint:
+    def test_feedback_is_accepted_without_logging_raw_user_id(
+        self, client: TestClient, caplog
+    ) -> None:
+        payload = {
+            "impression_id": "imp-1",
+            "user_id": "private-user",
+            "item_id": "item_3",
+            "event_type": "click",
+            "position": 2,
+            "model_version": "development-untrained",
+        }
+        with caplog.at_level("INFO"):
+            response = client.post("/recommendations/feedback", json=payload)
+        assert response.status_code == 202
+        assert "private-user" not in caplog.text
+        assert "anonymous_user_id" in caplog.text

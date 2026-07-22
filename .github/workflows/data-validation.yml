@@ -25,8 +25,8 @@ jobs:
       - name: 📦 Install Data Integrity Frameworks
         run: |
           python -m pip install --upgrade pip
-          pip install pydantic great_expectations pytest
+          pip install pydantic pytest
 
       - name: 🧬 Audit Ingestion Model Integrity
         run: |
-          pytest tests/test_schema_contracts.py || pytest tests/ || echo "⚠️ Ingestion Schema: Skipping data validation pass."
+          pytest tests/test_schema_contracts.py

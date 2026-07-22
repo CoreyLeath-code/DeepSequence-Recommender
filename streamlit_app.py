@@ -9,8 +9,12 @@ interactively build an item-sequence and receive top-k recommendations.
 
 from __future__ import annotations
 
-import streamlit as st
+from pathlib import Path
 
+import streamlit as st
+import torch
+
+from app.core.artifacts import load_bundle
 from app.core.config import settings
 from app.core.data_processor import SequenceProcessor
 from app.core.model import DeepSequenceModel
@@ -35,8 +39,13 @@ st.set_page_config(
 
 
 @st.cache_resource(show_spinner="Loading recommendation model…")
-def load_model() -> tuple[SequenceProcessor, DeepSequenceModel]:
-    """Initialise processor and model with the demo catalogue."""
+def load_model() -> tuple[SequenceProcessor, DeepSequenceModel, str, bool]:
+    """Load a trained bundle or an explicitly labelled development model."""
+    bundle = Path(settings.model_bundle_path)
+    if (bundle / "manifest.json").is_file():
+        processor, model, manifest = load_bundle(bundle)
+        return processor, model, manifest.model_version, True
+    torch.manual_seed(7)
     processor = SequenceProcessor(max_length=settings.max_sequence_length)
     demo_items = [[f"item_{i}" for i in range(DEMO_CATALOGUE_SIZE)]]
     processor.fit(demo_items)
@@ -47,10 +56,11 @@ def load_model() -> tuple[SequenceProcessor, DeepSequenceModel]:
         hidden_dim=settings.hidden_dim,
         num_layers=settings.num_layers,
     )
-    return processor, model
+    model.eval()
+    return processor, model, "development-untrained", False
 
 
-processor, model = load_model()
+processor, model, model_version, trained = load_model()
 
 # ---------------------------------------------------------------------------
 # UI
@@ -61,6 +71,10 @@ st.markdown(
     "A **sequence-aware** deep learning recommender powered by a "
     "Bidirectional LSTM + Attention architecture."
 )
+if not trained:
+    st.warning(
+        "Development mode: this seeded model is untrained and does not represent ranking quality."
+    )
 st.divider()
 
 # Sidebar: model info
@@ -71,6 +85,7 @@ with st.sidebar:
     st.metric("Hidden dim", settings.hidden_dim)
     st.metric("LSTM layers", settings.num_layers)
     st.metric("Max sequence length", settings.max_sequence_length)
+    st.caption(f"Model version: {model_version}")
     st.divider()
     st.caption("Architecture: BiLSTM + scaled dot-product attention → top-k items")
 

@@ -1,53 +1,46 @@
-import os
+"""Export the verified production bundle—not a mock architecture—to ONNX."""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
 import torch
-import numpy as np
 
-class MockSequentialModel(torch.nn.Module):
-    """
-    A structural representation of a Deep Sequential Recommendation network 
-    (such as a Transformer, GRU, or SASRec architecture variant).
-    """
-    def __init__(self, vocab_size=5000, embedding_dim=128, sequence_length=50):
-        super().__init__()
-        self.item_embeddings = torch.nn.Embedding(vocab_size, embedding_dim)
-        self.sequence_layer = torch.nn.GRU(embedding_dim, embedding_dim, batch_first=True)
-        self.scoring_head = torch.nn.Linear(embedding_dim, vocab_size)
+from app.core.artifacts import load_bundle
 
-    def forward(self, input_sequences):
-        # input_sequences shape: [Batch Size, Sequence Length]
-        embedded = self.item_embeddings(input_sequences)
-        gru_out, _ = self.sequence_layer(embedded)
-        # Pull down the absolute final hidden sequence state embedding token [Batch Size, Embedding Dim]
-        final_state = gru_out[:, -1, :]
-        logits = self.scoring_head(final_state)
-        return logits
 
-def export_to_onnx_runtime(output_path="models/deep_sequence_rec.onnx"):
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    
-    # Initialize the structural network layout
-    model = MockSequentialModel()
+def export_bundle_to_onnx(
+    bundle_path: str | Path,
+    output_path: str | Path,
+    opset_version: int = 17,
+) -> Path:
+    processor, model, _manifest = load_bundle(bundle_path)
     model.eval()
-
-    # Generate model input constraints (Batch Size: 1, Evaluation Sequence Window Length: 50)
-    dummy_input = torch.randint(0, 5000, (1, 50), dtype=torch.long)
-
-    print(f"🚀 Serializing target Deep Sequence model matrix to: {output_path}...")
+    destination = Path(output_path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    example = torch.ones((1, processor.max_length), dtype=torch.long)
     torch.onnx.export(
         model,
-        dummy_input,
-        output_path,
+        example,
+        destination,
         export_params=True,
-        opset_version=17,
+        opset_version=opset_version,
         do_constant_folding=True,
-        input_names=['input_sequences'],
-        output_names=['output_logits'],
-        dynamic_axes={
-            'input_sequences': {0: 'batch_size'},
-            'output_logits': {0: 'batch_size'}
-        }
+        dynamo=False,
+        input_names=["item_sequence"],
+        output_names=["logits"],
     )
-    print("✅ Model deployment serialization matrix compilation complete.")
+    return destination
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--bundle", default="models/current")
+    parser.add_argument("--output", default="models/deep_sequence_rec.onnx")
+    args = parser.parse_args()
+    print(export_bundle_to_onnx(args.bundle, args.output))
+
 
 if __name__ == "__main__":
-    export_to_onnx_runtime()
+    main()

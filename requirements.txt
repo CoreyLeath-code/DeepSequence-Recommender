@@ -1,17 +1,13 @@
-# Machine Learning & Deep Sequence Core Libraries
-torch>=2.2.0
-numpy>=1.24.2
-pandas>=2.2.1
-
-# High Performance Serialization Format Models
-onnx>=1.15.0
-onnxruntime>=1.17.0
-
-# User Visualization & Diagnostics Telemetry Panels
-streamlit>=1.30.0
-matplotlib>=3.8.2
-seaborn>=0.13.2
-fastapi>=0.100.0
-httpx>=0.24.0
-prometheus_client>=0.17.0
-pydantic-settings>=2.0.0
+torch>=2.2,<3
+numpy>=1.24,<3
+pandas>=2.2,<3
+onnx>=1.15,<2
+onnxruntime>=1.17,<2
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+httpx>=0.27,<1
+prometheus-client>=0.20,<1
+pydantic-settings>=2.7,<3
+streamlit>=1.40,<2
+matplotlib>=3.8,<4
+seaborn>=0.13,<1

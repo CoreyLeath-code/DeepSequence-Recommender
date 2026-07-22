@@ -1,33 +1,17 @@
 # Metrics
 
-DeepSequence Recommender exposes a Prometheus scrape endpoint at `GET /metrics`.
+Prometheus metrics are exposed at `GET /metrics`.
 
-## Exposed Metrics
+| Metric | Meaning |
+|---|---|
+| `deepseq_active_requests` | In-flight model requests admitted by this replica |
+| `deepseq_recommendations_total{status}` | Success, cache, fallback, overload, and error outcomes |
+| `deepseq_recommendation_latency_seconds` | End-to-end admitted request latency |
+| `deepseq_model_inference_latency_seconds` | PyTorch inference duration |
+| `deepseq_cache_hits_total` / `deepseq_cache_misses_total` | Replica-local cache behavior |
+| `deepseq_feedback_events_total{event_type}` | Accepted learning-feedback events |
 
-| Metric | Type | Description |
-|--------|------|-------------|
-| `deepseq_active_requests` | Gauge | Currently in-flight recommendation requests |
-| `deepseq_recommendations_total{status}` | Counter | Total recommendations served (labelled `success` or `error`) |
-| `deepseq_recommendation_latency_seconds` | Histogram | End-to-end request latency |
-| `deepseq_model_inference_latency_seconds` | Histogram | Neural model forward-pass latency |
-| `deepseq_cache_hits_total` | Counter | Redis cache hits |
-| `deepseq_cache_misses_total` | Counter | Redis cache misses |
-
-## Prometheus Scrape Config
-
-```yaml
-scrape_configs:
-  - job_name: 'deepsequence-recommender'
-    static_configs:
-      - targets: ['deepsequence-service:8000']
-```
-
-## SLO Targets
-
-| SLO | Target |
-|-----|--------|
-| p50 recommendation latency | < 50 ms |
-| p99 recommendation latency | < 250 ms |
-| Model inference p50 latency | < 20 ms |
-| Availability | ≥ 99.9 % |
-| Error rate | < 0.1 % |
+No availability SLO is claimed by the repository. Operators should establish objectives only after
+target-environment load and failure testing. Recommended alert dimensions include model version,
+error/fallback rate, saturation, p95/p99 latency, unknown-item rate, drift, delayed-label ranking
+quality, coverage, and experiment guardrails.

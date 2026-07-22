@@ -29,5 +29,5 @@ jobs:
 
       - name: 📦 Evaluate Package Insecurities
         run: |
-          pip install safety
-          safety check || echo "⚠️ Security Alert: Review reported package vulnerabilities."
+          pip install pip-audit
+          pip-audit -r requirements.txt

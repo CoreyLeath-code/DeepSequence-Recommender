@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+import torch
 
 from app.core.data_processor import SequenceProcessor
 from app.core.model import DeepSequenceModel
@@ -98,7 +99,8 @@ class TestDeepSequenceModel:
     def test_forward_shape(self, model: DeepSequenceModel, processor: SequenceProcessor) -> None:
         tensor = processor.to_tensor(["a", "b", "c"])
         logits = model(tensor)
-        assert logits.shape == (1, processor.vocab_size)
+        assert logits.shape == (1, processor.vocab_size + 1)
+        assert logits[0, 0].isneginf()
 
     def test_recommend_returns_top_k(
         self, model: DeepSequenceModel, processor: SequenceProcessor
@@ -121,3 +123,19 @@ class TestDeepSequenceModel:
         tensor = processor.to_tensor(["a", "b"])
         recs = model.recommend(tensor, top_k=5)
         assert len(recs) == len(set(recs))
+
+    def test_last_catalogue_item_is_eligible(
+        self, model: DeepSequenceModel, processor: SequenceProcessor
+    ) -> None:
+        assert model.output_proj.out_features == processor.vocab_size + 1
+
+    def test_empty_known_history_is_rejected(self, model: DeepSequenceModel) -> None:
+        with pytest.raises(ValueError, match="known item"):
+            model.recommend(torch.zeros((1, 10), dtype=torch.long))
+
+
+def test_vocabulary_roundtrip(processor: SequenceProcessor) -> None:
+    restored = SequenceProcessor.from_vocabulary(
+        processor.export_vocabulary(), max_length=processor.max_length
+    )
+    assert restored.export_vocabulary() == processor.export_vocabulary()

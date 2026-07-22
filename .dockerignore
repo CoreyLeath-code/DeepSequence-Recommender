@@ -24,6 +24,10 @@ mlruns/
 models/*.pt
 models/*.pth
 models/*.ckpt
+models/
+data/
+benchmarks/
+scripts/
 .git
 .github
 tests/

@@ -16,17 +16,23 @@ spec:
     spec:
       containers:
         - name: deepsequence
-          image: your-docker-registry/deepsequence-recommender:latest
+          image: your-docker-registry/deepsequence-recommender:1.1.0
           ports:
             - containerPort: 8000
           env:
-            - name: SECRET_KEY
+            - name: API_KEY
               valueFrom:
                 secretKeyRef:
                   name: deepsequence-secrets
-                  key: secret-key
-            - name: REDIS_URL
-              value: "redis://deepsequence-redis:6379"
+                  key: api-key
+            - name: ENVIRONMENT
+              value: "production"
+            - name: MODEL_BUNDLE_PATH
+              value: "/models/current"
+          volumeMounts:
+            - name: model-bundle
+              mountPath: /models/current
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /recommendations/health
@@ -35,10 +41,16 @@ spec:
             periodSeconds: 5
           livenessProbe:
             httpGet:
-              path: /recommendations/health
+              path: /health
               port: 8000
             initialDelaySeconds: 20
             periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /recommendations/health
+              port: 8000
+            failureThreshold: 30
+            periodSeconds: 5
           resources:
             requests:
               cpu: "250m"
@@ -46,6 +58,18 @@ spec:
             limits:
               cpu: "1000m"
               memory: "2Gi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: model-bundle
+          persistentVolumeClaim:
+            claimName: deepsequence-model-bundle
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault

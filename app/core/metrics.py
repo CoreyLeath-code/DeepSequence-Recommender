@@ -27,10 +27,16 @@ model_inference_latency = Histogram(
 
 cache_hits_total = Counter(
     "deepseq_cache_hits_total",
-    "Total number of Redis cache hits",
+    "Total number of replica-local recommendation cache hits",
 )
 
 cache_misses_total = Counter(
     "deepseq_cache_misses_total",
-    "Total number of Redis cache misses",
+    "Total number of replica-local recommendation cache misses",
+)
+
+feedback_events_total = Counter(
+    "deepseq_feedback_events_total",
+    "Feedback events accepted for offline learning",
+    ["event_type"],
 )
