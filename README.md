@@ -124,7 +124,7 @@ Feedback is accepted at `POST /recommendations/feedback`. Raw user IDs are hashe
 are logged. Production should route structured logs to a governed event bus with retention,
 consent, deletion, and delivery guarantees.
 
-## L5 engineering details
+
 
 | Concern | Decision | Tradeoff / boundary |
 |---|---|---|
