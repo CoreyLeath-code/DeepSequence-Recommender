@@ -17,8 +17,6 @@
   <img src="https://img.shields.io/badge/Model%20bundle-SHA--256-2E8B57" alt="Checksummed bundles">
   <img src="https://img.shields.io/badge/Evaluation-Recall%20%7C%20NDCG%20%7C%20MRR-6C5CE7" alt="Ranking metrics">
   <img src="https://img.shields.io/badge/Container-non--root-2496ED?logo=docker&logoColor=white" alt="Non-root container">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/CoreyLeath-code/DeepSequence-Recommender" alt="License"></a>
-</p>
 
 DeepSequence Recommender learns next-item behavior from timestamped interactions. One connected
 path now covers schema validation, chronological splits, training, baseline comparison, model
