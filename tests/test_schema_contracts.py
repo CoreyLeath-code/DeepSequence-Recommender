@@ -1,11 +1,16 @@
 """Versioned event and temporal-split contract tests."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from pydantic import ValidationError
 
-from src.training.data import InteractionEvent, next_item_examples, session_sequences, temporal_split
+from src.training.data import (
+    InteractionEvent,
+    next_item_examples,
+    session_sequences,
+    temporal_split,
+)
 
 
 def event(index: int, session: str = "s1") -> InteractionEvent:
@@ -15,7 +20,7 @@ def event(index: int, session: str = "s1") -> InteractionEvent:
         session_id=session,
         item_id=f"item-{index % 3}",
         event_type="click",
-        timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(minutes=index),
+        timestamp=datetime(2026, 1, 1, tzinfo=UTC) + timedelta(minutes=index),
     )
 
 
@@ -27,7 +32,7 @@ def test_event_schema_rejects_unknown_event_type() -> None:
             session_id="s",
             item_id="i",
             event_type="share",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
         )
 
 
