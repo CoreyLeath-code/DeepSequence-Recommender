@@ -6,24 +6,22 @@ import math
 
 
 def recall_at_k(predictions: list[list[str]], targets: list[str]) -> float:
-    return sum(target in predicted for predicted, target in zip(predictions, targets)) / len(targets)
+    return sum(target in predicted for predicted, target in zip(predictions, targets)) / len(
+        targets
+    )
 
 
 def mrr_at_k(predictions: list[list[str]], targets: list[str]) -> float:
     reciprocal_ranks = []
     for predicted, target in zip(predictions, targets):
-        reciprocal_ranks.append(
-            1 / (predicted.index(target) + 1) if target in predicted else 0.0
-        )
+        reciprocal_ranks.append(1 / (predicted.index(target) + 1) if target in predicted else 0.0)
     return sum(reciprocal_ranks) / len(targets)
 
 
 def ndcg_at_k(predictions: list[list[str]], targets: list[str]) -> float:
     gains = []
     for predicted, target in zip(predictions, targets):
-        gains.append(
-            1 / math.log2(predicted.index(target) + 2) if target in predicted else 0.0
-        )
+        gains.append(1 / math.log2(predicted.index(target) + 2) if target in predicted else 0.0)
     return sum(gains) / len(targets)
 
 
