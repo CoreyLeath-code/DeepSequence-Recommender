@@ -124,9 +124,7 @@ def recommend(
     if req.top_k > _runtime.processor.vocab_size:
         raise HTTPException(status_code=422, detail="top_k exceeds catalogue size")
 
-    known_items = [
-        item for item in req.item_sequence if _runtime.processor.item_to_idx(item) != 0
-    ]
+    known_items = [item for item in req.item_sequence if _runtime.processor.item_to_idx(item) != 0]
     if not known_items:
         raise HTTPException(status_code=422, detail="Sequence contains no known catalogue items")
     remaining_items = _runtime.processor.vocab_size - len(set(known_items))
