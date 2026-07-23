@@ -22,4 +22,5 @@ class Settings(BaseSettings):
     requests_per_minute: int = 120
     api_key: str | None = None
 
+
 settings = Settings()
