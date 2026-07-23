@@ -26,6 +26,55 @@ The repository does **not** ship a trained production model or claim production 
 Production fails closed unless a verified bundle is mounted. Development uses a deterministic
 untrained model so API integration can be tested without presenting random ranking as AI quality.
 
+
+## Production Readiness Guide
+
+> This section is the portfolio audit entry point for **DeepSequence-Recommender**. It describes an engineering promotion path; it is not a claim that the repository is already production-authorized.
+
+[![CI](https://img.shields.io/github/actions/workflow/status/CoreyLeath-code/DeepSequence-Recommender/ci.yml?branch=main&label=CI)](https://github.com/CoreyLeath-code/DeepSequence-Recommender/actions) [![License](https://img.shields.io/github/license/CoreyLeath-code/DeepSequence-Recommender)](https://github.com/CoreyLeath-code/DeepSequence-Recommender/blob/main/LICENSE)
+
+### Architecture flowchart
+
+```mermaid
+flowchart LR
+    Client --> Gateway --> Services[API + workers] --> Events[(Event bus)] --> Store[(State)]
+```
+
+### Quickstart and local validation
+
+The supported local path should be reproducible from a clean checkout. The inferred stack for this repository is **Python/platform services**.
+
+```bash
+python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+pytest -q
+```
+
+If the project uses external services, model artifacts, cloud credentials, or private data, start them through documented local fixtures or mocks. Never place secrets or identifiable records in the repository.
+
+### Research-style metrics and benchmarks
+
+| Evidence | Required record |
+|---|---|
+| Correctness | Test command, commit SHA, runtime, and pass/fail result |
+| Performance | Warm-up, sample count, concurrency, median, p95, p99, throughput, and memory |
+| Data/model quality | Dataset version, split strategy, leakage controls, calibration, subgroup results, and uncertainty |
+| Runtime | Image digest, health-check latency, resource limits, and rollback target |
+| Security | Dependency, secret, SAST, container, and SBOM results |
+
+A benchmark number belongs in a versioned artifact tied to a commit and hardware/runtime description. Engineering benchmarks must not be presented as clinical, financial, safety, or model-quality validation without the appropriate domain evidence.
+
+### Extended Q&A
+
+**What is production-ready for this repository?**  
+A reproducible build, tested public contract, controlled configuration, observable runtime, documented security boundary, versioned artifacts, and a tested rollback path.
+
+**What must remain explicit?**  
+The intended use, excluded use, data/credential handling, model or algorithm limitations, and which metrics are measured versus aspirational.
+
+**What should be completed next?**  
+Use the linked production-readiness issue for this repository as the checklist. Resolve missing tests, deployment instructions, observability, supply-chain controls, and release evidence before attaching a production claim.
+
+
 ## Engineering features
 
 - Padding-aware attention, aligned item/output IDs, excluded padding class, and bounded top-k.
@@ -264,7 +313,91 @@ privacy, observability, delivery, and honest claims form the production system a
 - [Benchmark methodology](docs/BENCHMARKS.md)
 - [Model card](docs/MODEL_CARD.md)
 - [Operations runbook](docs/OPERATIONS.md)
-- [Privacy policy](docs/PRIVACY.md)
-- [Issue #8](https://github.com/CoreyLeath-code/DeepSequence-Recommender/issues/8)
+- [Privacy policy](docs/PRIVACY…4021 tokens truncated…Scaled dot-product self-attention over LSTM hidden states."""
 
-MIT licensed. See [LICENSE](LICENSE).
+    def __init__(self, hidden_dim: int) -> None:
+        super().__init__()
+        self.attn = nn.Linear(hidden_dim * 2, 1)
+
+    def forward(self, lstm_out: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        # lstm_out: (batch, seq_len, hidden_dim*2)
+        scores = self.attn(lstm_out).squeeze(-1)  # (batch, seq_len)
+        scores = scores.masked_fill(~mask, -1e9)
+        weights = F.softmax(scores, dim=-1) * mask
+        weights = weights / weights.sum(dim=-1, keepdim=True).clamp_min(1e-9)
+        weights = weights.unsqueeze(-1)  # (batch, seq_len, 1)
+        context = (lstm_out * weights).sum(dim=1)  # (batch, hidden_dim*2)
+        return context
+
+
+class DeepSequenceModel(nn.Module):
+    """Bidirectional LSTM + attention sequence recommender."""
+
+    def __init__(
+        self,
+        num_items: int,
+        embedding_dim: int = 64,
+        hidden_dim: int = 128,
+        num_layers: int = 2,
+        dropout: float = 0.3,
+        padding_idx: int = 0,
+    ) -> None:
+        super().__init__()
+        self.embedding = nn.Embedding(num_items + 1, embedding_dim, padding_idx=padding_idx)
+        self.lstm = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            batch_first=True,
+            bidirectional=True,
+            dropout=dropout if num_layers > 1 else 0.0,
+        )
+        self.attention = AttentionLayer(hidden_dim)
+        self.dropout = nn.Dropout(dropout)
+        self.num_items = num_items
+        self.padding_idx = padding_idx
+        self.output_proj = nn.Linear(hidden_dim * 2, num_items + 1)
+
+    def forward(self, item_seq: torch.Tensor) -> torch.Tensor:
+        """Return logits over the item catalogue.
+
+        Parameters
+        ----------
+        item_seq:
+            LongTensor of shape ``(batch_size, seq_len)`` containing item IDs.
+
+        Returns
+        -------
+        torch.Tensor
+            Logit tensor of shape ``(batch_size, num_items + 1)``. Index zero
+            is reserved for padding and is never eligible for recommendation.
+        """
+        emb = self.dropout(self.embedding(item_seq))  # (B, L, E)
+        lstm_out, _ = self.lstm(emb)  # (B, L, H*2)
+        mask = item_seq.ne(self.padding_idx)
+        context = self.attention(lstm_out, mask)  # (B, H*2)
+        logits = self.output_proj(self.dropout(context))  # (B, num_items + 1)
+        logits[:, self.padding_idx] = float("-inf")
+        return logits
+
+    @torch.no_grad()
+    def recommend(
+        self,
+        item_seq: torch.Tensor,
+        top_k: int = 10,
+        exclude_ids: list[int] | None = None,
+    ) -> list[int]:
+        """Return top-k recommended item IDs for a single sequence."""
+        self.eval()
+        if item_seq.ndim != 2 or not item_seq.ne(self.padding_idx).any():
+            raise ValueError("A recommendation requires at least one known item")
+        if not 1 <= top_k <= self.num_items:
+            raise ValueError(f"top_k must be between 1 and {self.num_items}")
+        excluded = {idx for idx in (exclude_ids or []) if 1 <= idx <= self.num_items}
+        if top_k > self.num_items - len(excluded):
+            raise ValueError("top_k exceeds the remaining eligible catalogue")
+        logits = self.forward(item_seq)
+        for idx in excluded:
+            logits[:, idx] = float("-inf")
+        scores = torch.topk(logits, k=top_k, dim=-1)
+        return scores.indices[0].tolist()

@@ -23,9 +23,7 @@ def run_benchmark(iterations: int = 200, warmup: int = 20) -> dict:
     if iterations < 1 or warmup < 0:
         raise ValueError("iterations must be positive and warmup non-negative")
     torch.manual_seed(7)
-    processor = SequenceProcessor(max_length=50).fit(
-        [[f"item_{index}" for index in range(500)]]
-    )
+    processor = SequenceProcessor(max_length=50).fit([[f"item_{index}" for index in range(500)]])
     model = DeepSequenceModel(
         num_items=processor.vocab_size,
         embedding_dim=32,

@@ -10,11 +10,9 @@ Architecture
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class AttentionLayer(nn.Module):
@@ -90,8 +88,8 @@ class DeepSequenceModel(nn.Module):
         self,
         item_seq: torch.Tensor,
         top_k: int = 10,
-        exclude_ids: Optional[List[int]] = None,
-    ) -> List[int]:
+        exclude_ids: list[int] | None = None,
+    ) -> list[int]:
         """Return top-k recommended item IDs for a single sequence."""
         self.eval()
         if item_seq.ndim != 2 or not item_seq.ne(self.padding_idx).any():

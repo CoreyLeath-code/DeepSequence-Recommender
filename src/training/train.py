@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -84,9 +84,7 @@ def model_predictions(
         known_history = [item for item in history if processor.item_to_idx(item) != 0]
         if not known_history:
             continue
-        eligible_top_k = min(
-            top_k, processor.vocab_size - len(set(known_history))
-        )
+        eligible_top_k = min(top_k, processor.vocab_size - len(set(known_history)))
         if eligible_top_k < 1:
             continue
         indices = model.recommend(
@@ -133,15 +131,13 @@ def run_training(
     baseline_predictions = [
         baseline.recommend(history, top_k) for history, _target in eligible_validation
     ]
-    baseline_metrics = evaluate_ranking(
-        baseline_predictions, validation_targets, catalogue
-    )
+    baseline_metrics = evaluate_ranking(baseline_predictions, validation_targets, catalogue)
 
     test_predictions, test_targets = model_predictions(model, processor, test_examples, top_k)
     test_metrics = (
         evaluate_ranking(test_predictions, test_targets, catalogue) if test_targets else {}
     )
-    version = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    version = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     config = {
         "embedding_dim": 32,
         "hidden_dim": 64,
@@ -152,7 +148,7 @@ def run_training(
     }
     manifest = ModelManifest(
         model_version=version,
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(UTC).isoformat(),
         architecture_config=config,
         metrics={f"validation_{key}": value for key, value in neural_metrics.items()},
         dataset_id=dataset_id(events),
@@ -182,7 +178,14 @@ def main() -> None:
     parser.add_argument("--top-k", type=int, default=10)
     parser.add_argument("--seed", type=int, default=7)
     args = parser.parse_args()
-    print(json.dumps(run_training(args.dataset, args.output, epochs=args.epochs, top_k=args.top_k, seed=args.seed), indent=2))
+    print(
+        json.dumps(
+            run_training(
+                args.dataset, args.output, epochs=args.epochs, top_k=args.top_k, seed=args.seed
+            ),
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

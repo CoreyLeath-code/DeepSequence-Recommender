@@ -1,15 +1,15 @@
 """Model-bundle integrity and ranking-evaluation tests."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-import pytest
 import onnx
+import pytest
 
 from app.core.artifacts import ModelManifest, load_bundle, save_bundle
 from app.core.data_processor import SequenceProcessor
 from app.core.model import DeepSequenceModel
-from src.training.metrics import evaluate_ranking
 from src.serving.onnx_exporter import export_bundle_to_onnx
+from src.training.metrics import evaluate_ranking
 
 
 def test_model_bundle_roundtrip_and_checksum(tmp_path) -> None:
@@ -22,7 +22,7 @@ def test_model_bundle_roundtrip_and_checksum(tmp_path) -> None:
     )
     manifest = ModelManifest(
         model_version="test-v1",
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(UTC).isoformat(),
         architecture_config={
             "embedding_dim": 8,
             "hidden_dim": 8,
@@ -51,9 +51,7 @@ def test_model_bundle_roundtrip_and_checksum(tmp_path) -> None:
 
 
 def test_ranking_metrics_have_known_values() -> None:
-    metrics = evaluate_ranking(
-        [["a", "b"], ["c", "d"]], ["a", "d"], {"a", "b", "c", "d"}
-    )
+    metrics = evaluate_ranking([["a", "b"], ["c", "d"]], ["a", "d"], {"a", "b", "c", "d"})
     assert metrics["recall_at_k"] == 1.0
     assert metrics["mrr_at_k"] == 0.75
     assert metrics["catalogue_coverage"] == 1.0

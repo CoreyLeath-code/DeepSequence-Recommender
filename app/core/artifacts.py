@@ -54,9 +54,7 @@ def save_bundle(
             "vocabulary_sha256": _sha256(vocabulary_path),
         }
     )
-    (target / "manifest.json").write_text(
-        completed.model_dump_json(indent=2), encoding="utf-8"
-    )
+    (target / "manifest.json").write_text(completed.model_dump_json(indent=2), encoding="utf-8")
     return completed
 
 
