@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from src.training.data import InteractionEvent, write_jsonl
 
 
 def generate_events(sessions: int = 20, events_per_session: int = 6) -> list[InteractionEvent]:
     events = []
-    started = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    started = datetime(2026, 1, 1, tzinfo=UTC)
     index = 0
     for session_index in range(sessions):
         for position in range(events_per_session):
