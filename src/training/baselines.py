@@ -9,7 +9,7 @@ class PopularityBaseline:
     def __init__(self) -> None:
         self.ranking: list[str] = []
 
-    def fit(self, sequences: list[list[str]]) -> "PopularityBaseline":
+    def fit(self, sequences: list[list[str]]) -> PopularityBaseline:
         counts = Counter(item for sequence in sequences for item in sequence)
         self.ranking = [item for item, _ in counts.most_common()]
         return self
