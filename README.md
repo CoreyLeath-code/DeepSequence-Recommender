@@ -51,7 +51,7 @@ pytest -q
 
 If the project uses external services, model artifacts, cloud credentials, or private data, start them through documented local fixtures or mocks. Never place secrets or identifiable records in the repository.
 
-### Research-style metrics and benchmarks
+
 
 | Evidence | Required record |
 |---|---|
@@ -63,7 +63,7 @@ If the project uses external services, model artifacts, cloud credentials, or pr
 
 A benchmark number belongs in a versioned artifact tied to a commit and hardware/runtime description. Engineering benchmarks must not be presented as clinical, financial, safety, or model-quality validation without the appropriate domain evidence.
 
-### Extended Q&A
+
 
 **What is production-ready for this repository?**  
 A reproducible build, tested public contract, controlled configuration, observable runtime, documented security boundary, versioned artifacts, and a tested rollback path.
