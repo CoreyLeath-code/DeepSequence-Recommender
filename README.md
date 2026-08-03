@@ -162,6 +162,8 @@ API_KEY='replace-me' \
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
+In production, `API_KEY` is mandatory. When it is unset, recommendation and feedback requests return HTTP 503 so a deployment cannot silently expose unauthenticated endpoints. Development intentionally permits an unset key for local smoke tests.
+
 ```bash
 curl -X POST http://localhost:8000/recommendations/ \
   -H 'Content-Type: application/json' \

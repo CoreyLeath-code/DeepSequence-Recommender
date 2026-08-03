@@ -89,6 +89,10 @@ class FeedbackRequest(BaseModel):
 
 
 def _authorize(api_key: str | None) -> None:
+    """Enforce configured authentication for production recommendation traffic."""
+
+    if settings.environment.lower() == "production" and not settings.api_key:
+        raise HTTPException(status_code=503, detail="Production API key is not configured")
     if not api_key_is_valid(api_key, settings.api_key):
         raise HTTPException(status_code=401, detail="Invalid API key")
 
