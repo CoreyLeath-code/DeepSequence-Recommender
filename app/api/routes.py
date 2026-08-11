@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import logging
 import time
@@ -102,7 +103,9 @@ def _rate_limit_identity(api_key: str | None) -> str:
 
     if api_key is None:
         return "development-anonymous"
-    return hashlib.sha256(api_key.encode("utf-8")).hexdigest()
+    return hmac.new(
+        api_key.encode("utf-8"), b"deepsequence-rate-limit-identity:v1", hashlib.sha256
+    ).hexdigest()
 
 
 def _response(
