@@ -83,7 +83,6 @@ class DeepSequenceModel(nn.Module):
         logits[:, self.padding_idx] = float("-inf")
         return logits
 
-
     @torch.no_grad()
     def rank_candidates(
         self,
