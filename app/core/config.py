@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     max_sequence_length: int = 50
     top_k: int = 10
     max_top_k: int = 50
+    retrieval_candidate_pool_size: int = 100
     model_bundle_path: str = "models/current"
     max_inference_ms: float = 250.0
     max_concurrent_inferences: int = 8
