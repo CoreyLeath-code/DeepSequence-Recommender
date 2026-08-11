@@ -83,6 +83,37 @@ class DeepSequenceModel(nn.Module):
         logits[:, self.padding_idx] = float("-inf")
         return logits
 
+
+    @torch.no_grad()
+    def rank_candidates(
+        self,
+        item_seq: torch.Tensor,
+        candidate_ids: list[int],
+        *,
+        top_k: int,
+    ) -> list[int]:
+        """Apply the sequence ranker only to retrieval-stage candidates."""
+
+        if item_seq.ndim != 2 or not item_seq.ne(self.padding_idx).any():
+            raise ValueError("A recommendation requires at least one known item")
+        unique_candidates = list(dict.fromkeys(candidate_ids))
+        if not unique_candidates:
+            raise ValueError("candidate_ids must not be empty")
+        if any(candidate < 1 or candidate > self.num_items for candidate in unique_candidates):
+            raise ValueError("candidate_ids must be known non-padding item IDs")
+        if not 1 <= top_k <= len(unique_candidates):
+            raise ValueError("top_k must not exceed the candidate pool")
+
+        logits = self.forward(item_seq)
+        candidates = torch.tensor(
+            unique_candidates,
+            dtype=torch.long,
+            device=logits.device,
+        )
+        candidate_scores = logits[0, candidates]
+        positions = torch.topk(candidate_scores, k=top_k).indices
+        return candidates[positions].tolist()
+
     @torch.no_grad()
     def recommend(
         self,
