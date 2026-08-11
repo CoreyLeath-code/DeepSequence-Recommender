@@ -1,7 +1,7 @@
 import pytest
 from fastapi import HTTPException
 
-from app.api.routes import _authorize
+from app.api.routes import _authorize, _rate_limit_identity
 from app.core.config import settings
 from app.core.security import api_key_is_valid
 from app.core.serving import RateLimiter, RecommendationCache
@@ -12,6 +12,17 @@ def test_rate_limiter_fails_closed_after_budget() -> None:
     assert limiter.allow("user") is True
     assert limiter.allow("user") is True
     assert limiter.allow("user") is False
+
+
+def test_rate_limit_identity_is_credential_scoped_and_non_secret() -> None:
+    limiter = RateLimiter(1)
+    identity = _rate_limit_identity("shared-credential")
+
+    assert identity != "shared-credential"
+    assert identity == _rate_limit_identity("shared-credential")
+    assert limiter.allow(identity) is True
+    # A caller can change user_id, but cannot change this credential-derived bucket.
+    assert limiter.allow(_rate_limit_identity("shared-credential")) is False
 
 
 def test_cache_is_model_version_aware() -> None:
