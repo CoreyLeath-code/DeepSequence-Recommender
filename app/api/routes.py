@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import logging
 import time
@@ -97,6 +98,16 @@ def _authorize(api_key: str | None) -> None:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
 
+def _rate_limit_identity(api_key: str | None) -> str:
+    """Return a non-secret identity that callers cannot control through request fields."""
+
+    if api_key is None:
+        return "development-anonymous"
+    return hmac.new(
+        api_key.encode("utf-8"), b"deepsequence-rate-limit-identity:v1", hashlib.sha256
+    ).hexdigest()
+
+
 def _response(
     request: RecommendRequest,
     recommendations: list[str],
@@ -121,7 +132,7 @@ def recommend(
     req: RecommendRequest, x_api_key: str | None = Header(default=None)
 ) -> RecommendResponse:
     _authorize(x_api_key)
-    if not _rate_limiter.allow(req.user_id):
+    if not _rate_limiter.allow(_rate_limit_identity(x_api_key)):
         raise HTTPException(status_code=429, detail="Recommendation rate limit exceeded")
     if _runtime is None:
         raise HTTPException(status_code=503, detail="Model not initialised")
