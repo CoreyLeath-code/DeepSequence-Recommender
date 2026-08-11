@@ -31,7 +31,7 @@ untrained model so API integration can be tested without presenting random ranki
 
 > This section is the portfolio audit entry point for **DeepSequence-Recommender**. It describes an engineering promotion path; it is not a claim that the repository is already production-authorized.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/CoreyLeath-code/DeepSequence-Recommender/ci.yml?branch=main&label=CI)](https://github.com/CoreyLeath-code/DeepSequence-Recommender/actions) [![License](https://img.shields.io/github/license/CoreyLeath-code/DeepSequence-Recommender)](https://github.com/CoreyLeath-code/DeepSequence-Recommender/blob/main/LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/CoreyLeath-code/DeepSequence-Recommender/ci.yml?branch=main&label=CI)](https://github.com/CoreyLeath-code/DeepSequence-Recommender/actions) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ### Architecture flowchart
 
@@ -403,3 +403,7 @@ class DeepSequenceModel(nn.Module):
             logits[:, idx] = float("-inf")
         scores = torch.topk(logits, k=top_k, dim=-1)
         return scores.indices[0].tolist()
+
+## License
+
+Distributed under the [MIT License](LICENSE).
