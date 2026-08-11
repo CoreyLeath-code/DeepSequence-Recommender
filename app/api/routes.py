@@ -25,6 +25,7 @@ from app.core.metrics import (
     recommendations_total,
 )
 from app.core.model import DeepSequenceModel
+from app.core.retrieval import ExactEmbeddingRetriever
 from app.core.security import api_key_is_valid
 from app.core.serving import AdmissionController, RateLimiter, RecommendationCache
 
@@ -38,6 +39,7 @@ class ModelRuntime:
     model_version: str
     trained: bool
     popular_items: list[str]
+    retriever: ExactEmbeddingRetriever
 
 
 _runtime: ModelRuntime | None = None
@@ -62,6 +64,7 @@ def init_model(
         model_version=model_version,
         trained=trained,
         popular_items=popular_items or list(processor.export_vocabulary())[: settings.max_top_k],
+        retriever=ExactEmbeddingRetriever(settings.retrieval_candidate_pool_size),
     )
 
 
