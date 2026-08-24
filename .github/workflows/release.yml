@@ -1,26 +1,158 @@
-name: Automated Release Engineering
+name: Release and Publish Package
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Semantic version tag to publish (for example v1.1.0)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: deepsequence-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE_NAME: ghcr.io/coreyleath-code/deepsequence-recommender
 
 jobs:
-  tagging-engine:
-    name: Construct Semantic Version Tags
+  release:
+    name: Validate, release, and publish GHCR package
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]')
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    timeout-minutes: 30
 
     steps:
-      - name: ⬇️ Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 🏷️ Calculate Release Version Alpha
-        uses: anothrNick/github-tag-action@1.64.0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Resolve immutable release tag
+        id: version
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
-          DEFAULT_BUMP: patch
+          REQUESTED_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+
+          if [[ -n "${REQUESTED_TAG:-}" ]]; then
+            TAG="$REQUESTED_TAG"
+          else
+            VERSION="$(python - <<'PY'
+          import tomllib
+          with open('pyproject.toml', 'rb') as handle:
+              print(tomllib.load(handle)['project']['version'])
+          PY
+          )"
+            TAG="v${VERSION}"
+          fi
+
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must match vMAJOR.MINOR.PATCH; got: $TAG" >&2
+            exit 1
+          fi
+
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Using existing immutable tag $TAG for release/package recovery."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" "$GITHUB_SHA" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
+
+          VERSION="${TAG#v}"
+          RELEASE_SHA="$(git rev-list -n 1 "$TAG")"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "release_sha=$RELEASE_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Check out tagged source
+        run: git checkout --detach "${{ steps.version.outputs.tag }}"
+
+      - name: Install release test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pytest pytest-cov
+
+      - name: Run release test gate
+        run: pytest --cov=app --cov=src --cov-report=term-missing --cov-fail-under=85 tests/
+
+      - name: Build source release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          ARCHIVE="deepsequence-recommender-${VERSION}.tar.gz"
+          git archive --format=tar.gz --prefix="deepsequence-recommender-${VERSION}/" \
+            -o "$ARCHIVE" "${{ steps.version.outputs.tag }}"
+          sha256sum "$ARCHIVE" > SHA256SUMS
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and publish GHCR package
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.tag }}
+            ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ${{ env.IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.version.outputs.tag }}
+            org.opencontainers.image.revision=${{ steps.version.outputs.release_sha }}
+
+      - name: Create or repair GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.version.outputs.tag }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          ARCHIVE="deepsequence-recommender-${VERSION}.tar.gz"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ARCHIVE" SHA256SUMS --clobber
+          else
+            gh release create "$TAG" "$ARCHIVE" SHA256SUMS \
+              --title "DeepSequence Recommender $TAG" \
+              --generate-notes \
+              --verify-tag
+          fi
+
+      - name: Publish release summary
+        run: |
+          echo "### DeepSequence Recommender ${{ steps.version.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Release commit: \`${{ steps.version.outputs.release_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- GitHub Release: published/repaired" >> "$GITHUB_STEP_SUMMARY"
+          echo "- GHCR: \`${{ env.IMAGE_NAME }}:${{ steps.version.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image digest: \`${{ steps.push.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Source archive and SHA256SUMS attached" >> "$GITHUB_STEP_SUMMARY"
