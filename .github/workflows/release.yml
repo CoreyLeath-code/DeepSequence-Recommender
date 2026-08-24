@@ -77,8 +77,10 @@ jobs:
           fi
 
           VERSION="${TAG#v}"
+          RELEASE_SHA="$(git rev-list -n 1 "$TAG")"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "release_sha=$RELEASE_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Check out tagged source
         run: git checkout --detach "${{ steps.version.outputs.tag }}"
@@ -125,7 +127,7 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.version=${{ steps.version.outputs.tag }}
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ steps.version.outputs.release_sha }}
 
       - name: Create or repair GitHub Release
         shell: bash
@@ -149,6 +151,7 @@ jobs:
       - name: Publish release summary
         run: |
           echo "### DeepSequence Recommender ${{ steps.version.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Release commit: \`${{ steps.version.outputs.release_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- GitHub Release: published/repaired" >> "$GITHUB_STEP_SUMMARY"
           echo "- GHCR: \`${{ env.IMAGE_NAME }}:${{ steps.version.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Image digest: \`${{ steps.push.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"
