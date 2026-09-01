@@ -7,7 +7,7 @@ import hmac
 import time
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 
 from fastapi import APIRouter, Header, HTTPException
@@ -211,7 +211,7 @@ def feedback(req: FeedbackRequest, x_api_key: str | None = Header(default=None))
         "schema_version": 1,
         "event_id": str(uuid.uuid4()),
         "anonymous_user_id": anonymized_user,
-        "occurred_at": datetime.now(timezone.utc).isoformat(),
+        "occurred_at": datetime.now(UTC).isoformat(),
     }
     try:
         _feedback_sink.publish(event)

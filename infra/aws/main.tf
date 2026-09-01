@@ -115,8 +115,8 @@ resource "aws_iam_role_policy" "feedback_lambda" {
         Resource = aws_sqs_queue.feedback.arn
       },
       {
-        Effect = "Allow"
-        Action = ["s3:PutObject"]
+        Effect   = "Allow"
+        Action   = ["s3:PutObject"]
         Resource = "${aws_s3_bucket.feedback.arn}/feedback/*"
       }
     ]

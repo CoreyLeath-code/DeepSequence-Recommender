@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Mapping, Protocol
+from collections.abc import Mapping
+from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
 

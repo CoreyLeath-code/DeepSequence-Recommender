@@ -6,8 +6,10 @@ import json
 import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
+
+from botocore.exceptions import BotoCoreError, ClientError
 
 logger = logging.getLogger(__name__)
 
@@ -63,16 +65,14 @@ def parse_feedback_message(body: str) -> dict[str, Any]:
     if not isinstance(payload["event_id"], str) or not payload["event_id"]:
         raise TypeError("event_id must be a non-empty string")
 
-    occurred_at = str(payload["occurred_at"])
-    parsed = datetime.fromisoformat(occurred_at.replace("Z", "+00:00"))
+    parsed = datetime.fromisoformat(str(payload["occurred_at"]))
     if parsed.tzinfo is None:
         raise ValueError("occurred_at must include a timezone")
     return payload
 
 
 def _storage_key(payload: dict[str, Any], message_id: str) -> str:
-    occurred = datetime.fromisoformat(str(payload["occurred_at"]).replace("Z", "+00:00"))
-    occurred = occurred.astimezone(timezone.utc)
+    occurred = datetime.fromisoformat(str(payload["occurred_at"])).astimezone(UTC)
     safe_message_id = re.sub(r"[^A-Za-z0-9_.-]", "_", message_id)
     return (
         f"feedback/event_date={occurred:%Y-%m-%d}/hour={occurred:%H}/"
@@ -125,7 +125,7 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, list[dict[s
                 raise TypeError("SQS record must be an object")
             key = _process_record(record, bucket=bucket, s3_client=s3_client)
             logger.info("feedback_landed message_id=%s key=%s", message_id, key)
-        except Exception as exc:  # Lambda must isolate malformed records in a batch.
+        except (TypeError, ValueError, BotoCoreError, ClientError) as exc:
             logger.warning(
                 "feedback_ingestion_failed message_id=%s error_type=%s",
                 message_id,
