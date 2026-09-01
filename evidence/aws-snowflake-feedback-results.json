@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "status": "not_run",
+  "scope": "fastapi-to-sqs-to-lambda-to-s3-to-snowpipe-to-snowflake",
+  "commit_sha": null,
+  "aws": {
+    "deployment_status": "not_run",
+    "lambda_invocations": null,
+    "lambda_errors": null,
+    "lambda_duration_ms": {
+      "p50": null,
+      "p95": null,
+      "p99": null
+    },
+    "dlq_messages": null,
+    "s3_objects_written": null
+  },
+  "snowflake": {
+    "snowpipe_status": "not_run",
+    "rows_loaded": null,
+    "load_lag_seconds": {
+      "p50": null,
+      "p95": null,
+      "p99": null
+    },
+    "credits_consumed": null
+  },
+  "cost": {
+    "aws_billed_cost_usd": null,
+    "snowflake_billed_credits": null
+  },
+  "note": "No cloud performance, cost, freshness, availability, or business-impact claim is made until an authorized measured run records evidence tied to a commit."
+}
