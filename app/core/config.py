@@ -23,5 +23,9 @@ class Settings(BaseSettings):
     requests_per_minute: int = 120
     api_key: str | None = None
 
+    # Optional durable feedback delivery. When unset, development keeps structured-log behavior.
+    feedback_queue_url: str | None = None
+    aws_region: str = "us-east-1"
+
 
 settings = Settings()

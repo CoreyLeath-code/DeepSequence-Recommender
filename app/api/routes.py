@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-import json
-import logging
 import time
+import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Literal
 
 from fastapi import APIRouter, Header, HTTPException
@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from app.core.config import settings
 from app.core.data_processor import SequenceProcessor
+from app.core.feedback_sink import FeedbackPublishError, build_feedback_sink
 from app.core.metrics import (
     active_requests,
     cache_hits_total,
@@ -46,7 +47,10 @@ _runtime: ModelRuntime | None = None
 _admission = AdmissionController(settings.max_concurrent_inferences)
 _cache = RecommendationCache(settings.cache_ttl_seconds)
 _rate_limiter = RateLimiter(settings.requests_per_minute)
-logger = logging.getLogger(__name__)
+_feedback_sink = build_feedback_sink(
+    queue_url=settings.feedback_queue_url,
+    region=settings.aws_region,
+)
 
 
 def init_model(
@@ -200,13 +204,25 @@ def recommend(
 
 @router.post("/feedback", status_code=202, summary="Capture recommendation feedback")
 def feedback(req: FeedbackRequest, x_api_key: str | None = Header(default=None)) -> dict:
-    """Emit a privacy-minimized event for collection by the platform log pipeline."""
+    """Emit a privacy-minimized event to SQS when configured, otherwise structured logs."""
     _authorize(x_api_key)
     anonymized_user = hashlib.sha256(req.user_id.encode()).hexdigest()[:16]
-    event = req.model_dump(exclude={"user_id"}) | {"anonymous_user_id": anonymized_user}
-    logger.info("recommendation_feedback=%s", json.dumps(event, sort_keys=True))
+    event = req.model_dump(exclude={"user_id"}) | {
+        "schema_version": 1,
+        "event_id": str(uuid.uuid4()),
+        "anonymous_user_id": anonymized_user,
+        "occurred_at": datetime.now(UTC).isoformat(),
+    }
+    try:
+        _feedback_sink.publish(event)
+    except FeedbackPublishError as exc:
+        raise HTTPException(status_code=503, detail="Feedback pipeline unavailable") from exc
     feedback_events_total.labels(event_type=req.event_type).inc()
-    return {"accepted": True, "impression_id": req.impression_id}
+    return {
+        "accepted": True,
+        "impression_id": req.impression_id,
+        "delivery": _feedback_sink.name,
+    }
 
 
 @router.get("/health", summary="Model readiness check")

@@ -29,3 +29,7 @@ data/
 testtmp/
 benchmark-results.json
 coverage.xml
+.terraform/
+*.tfstate
+*.tfstate.*
+infra/aws/feedback_ingestion.zip
