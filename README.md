@@ -1,5 +1,11 @@
 # DeepSequence Recommender
 
+<!-- portfolio-lifecycle-badges:start -->
+[![Latest release](https://img.shields.io/github/v/release/CoreyLeath-code/DeepSequence-Recommender?display_name=tag&sort=semver)](https://github.com/CoreyLeath-code/DeepSequence-Recommender/releases/latest)
+[![Lifecycle documentation](https://img.shields.io/badge/lifecycle-documented-2563eb)](#ownership-promotion-and-operational-lifecycle)
+[![Maintainer](https://img.shields.io/badge/maintainer-Corey%20Leath-111827)](https://github.com/CoreyLeath-code)
+<!-- portfolio-lifecycle-badges:end -->
+
 <p align="center"><strong>A versioned, evaluated sequential recommender with a reproducible training-to-serving contract and an optional AWS-to-Snowflake feedback path.</strong></p>
 
 <p align="center">
